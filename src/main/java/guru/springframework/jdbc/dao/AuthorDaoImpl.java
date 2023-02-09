@@ -5,7 +5,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 @RequiredArgsConstructor
 @Component
@@ -38,15 +41,15 @@ public class AuthorDaoImpl implements AuthorDao {
         try (
                 Connection connection = source.getConnection();
                 PreparedStatement ps = connection.prepareStatement("SELECT * FROM author WHERE first_name=? AND last_name=?")
-                ) {
-                    ps.setString(1, firstName);
-                    ps.setString(2, lastName);
+        ) {
+            ps.setString(1, firstName);
+            ps.setString(2, lastName);
 
-                    try (ResultSet resultSet = ps.executeQuery()) {
-                        if (resultSet.next()) {
-                            return getAuthorFromRS(resultSet);
-                        }
-                    }
+            try (ResultSet resultSet = ps.executeQuery()) {
+                if (resultSet.next()) {
+                    return getAuthorFromRS(resultSet);
+                }
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -60,7 +63,7 @@ public class AuthorDaoImpl implements AuthorDao {
         try (
                 Connection connection = source.getConnection();
                 PreparedStatement ps = connection.prepareStatement("INSERT INTO author (first_name, last_name) VALUES (?, ?)")
-                ) {
+        ) {
 
             ps.setString(1, author.getFirstName());
             ps.setString(2, author.getLastName());
@@ -85,7 +88,7 @@ public class AuthorDaoImpl implements AuthorDao {
         try (
                 Connection connection = source.getConnection();
                 PreparedStatement ps = connection.prepareStatement("UPDATE author SET first_name=?, last_name=? WHERE id=?")
-                ) {
+        ) {
 
             ps.setString(1, author.getFirstName());
             ps.setString(2, author.getLastName());
@@ -97,6 +100,19 @@ public class AuthorDaoImpl implements AuthorDao {
         }
 
         return this.getById(author.getId());
+    }
+
+    @Override
+    public void deleteAuthorById(Long id) {
+        try (
+                Connection connection = source.getConnection();
+                PreparedStatement ps = connection.prepareStatement("DELETE FROM author WHERE id=?");
+        ) {
+            ps.setLong(1, id);
+            ps.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private static Author getAuthorFromRS(ResultSet resultSet) throws SQLException {
